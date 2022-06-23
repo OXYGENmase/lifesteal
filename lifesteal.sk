@@ -1,0 +1,849 @@
+# first time load
+on load:
+	if {ls.heartid} is not set:
+		set {ls.heartid} to 0
+	if {ls.heartlimit} is not set:
+		set {ls.heartlimit} to 50
+	if {ls.heartid} is not set:
+		set {ls.heartid} to 0
+	if {ls.recipe} is not set:
+		set {ls.recipe} to true
+	if {1.ls.recipe.item} is not set:
+		set {1.ls.recipe.item} to diamond
+	if {2.ls.recipe.item} is not set:
+		set {2.ls.recipe.item} to emerald block
+	if {3.ls.recipe.item} is not set:
+		set {3.ls.recipe.item} to diamond
+	if {4.ls.recipe.item} is not set:
+		set {4.ls.recipe.item} to emerald block
+	if {5.ls.recipe.item} is not set:
+		set {5.ls.recipe.item} to totem of undying
+	if {6.ls.recipe.item} is not set:
+		set {6.ls.recipe.item} to emerald block
+	if {7.ls.recipe.item} is not set:
+		set {7.ls.recipe.item} to diamond
+	if {8.ls.recipe.item} is not set:
+		set {8.ls.recipe.item} to emerald block
+	if {9.ls.recipe.item} is not set:
+		set {9.ls.recipe.item} to diamond
+	if {ls.mode} is not set:
+		set {ls.mode} to "Normal"
+	if {ls.secondary.mode} is not set:
+		set {ls.secondary.mode} to "Normal"
+	if {ls.bancmd} is not set:
+		set {ls.bancmd} to "ban {user} Eliminated."
+
+# assign ids when crafting
+on craft:
+	if name of event-item is "&cHea&4rt":
+		add 1 to {ls.heartid}
+		set line 3 of event-slot's lore to "&8ID: %{ls.heartid}%"
+
+# recipe refresh
+function refrec():
+	remove custom recipe "heart.recipe"
+	register new shaped recipe for red dye of infinity 1 named "&cHea&4rt" with enchant flags hidden with lore "&7Right click to add to" and "&7your &cmax-health" and "&8ID: &kmmm" using {1.ls.recipe.item}, {2.ls.recipe.item}, {3.ls.recipe.item}, {4.ls.recipe.item}, {5.ls.recipe.item}, {6.ls.recipe.item}, {7.ls.recipe.item}, {8.ls.recipe.item}, {9.ls.recipe.item} with id "heart.recipe"
+
+
+# every load
+on load:
+	if {disabled.ls.recipe} is not set:
+		refrec()
+
+# physical heart functionality
+on right click:
+	if name of event-item is "&cHea&4rt":
+		if {%player's uuid%.ls.hearts} >= {ls.heartlimit}:
+			message "&8[&cLife&4Steal&8] &fYou can not apply this heart as you are at &cheart limit&f!"
+			stop
+		if event-item is player's tool:
+			remove 1 of event-item from player's tool
+		else if event-item is player's offhand tool:
+			remove 1 of event-item from player's offhand tool
+		if {%player's uuid%.ls.hearts} is not set:
+			set {%player's uuid%.ls.hearts} to 10
+		add 1 to {%player's uuid%.ls.hearts}
+		if player's max health is 0.5:
+			set player's max health to 1
+		else:
+			set player's max health to player's max health + 1
+		message "&8[&cLife&4Steal&8] &fYou applied a heart and are now at &c%{%player's uuid%.ls.hearts}%&f hearts!"
+
+on tab complete of "/lifesteal" or "/ls":
+	set tab completions for position 1 to "config", "recipe", "info", "status" and "help"
+
+command /lifesteal [<text>]:
+	aliases: /ls
+	trigger:
+		if arg-1 is not set:
+			message "&7&m                                                                      "
+			message "&cLife&4Steal"
+			message "&fRequires: &cSkBee"
+			message "&fVersion: &c2.12"
+			message ""
+			message "&fA &cLife&4Steal &fskript made by &cOXYGENmase#5770&f."
+			message "&fplease leave a reveiw on github&4"
+			message "&fType &c/ls help&f for a list of commands"
+			message "&7&m                                                                      "
+			stop
+		if arg-1 is "help":
+			message "&7&m                                                                      "
+			message "&4&nCommands&7:"
+			message ""
+			message "&c/redeem&7 - &fRedeem a physical heart"
+			message "&c/ls recipe&7 - &fView the recipe for crafting hearts"
+			message "&c/ls status&7 - &fView the current mode settings"
+			message "&c/ls config&7 [&4ls.admin&7] - &fConfigure the skript in a gui"
+			message "&c/givehearts&7 [&4ls.admin&7] - &fGive yourself physical hearts"
+			message "&c/sethearts&7 [&4ls.mod&7] - &fSet a player's hearts"
+			message "&c/checkhearts&7 [&4ls.mod&7] - &fCheck a player's hearts"
+			message "&c/lsrevive&7 [&4ls.mod&7] - &fRevive a player who is eliminated"
+			message "&7&m                                                                      "
+			stop
+		if arg-1 is "config":
+			if player does not have permission "ls.admin":
+				message "&8[&cLife&4Steal&8] &cYou are lacking the permission node &7[&4ls.admin&7]"
+				stop
+			lsconfig(player)
+			stop
+		if arg-1 is "info":
+			execute player command "/lifesteal"
+			stop
+		if arg-1 is "status":
+			message "&7&m                                                                      "
+			message "&cLife&4Steal"
+			message "&7Modes:"
+			message ""
+			message "&8[&cPrimary&8] &f%{ls.mode}%"
+			if {ls.mode} is "Normal":
+				message "&7[&4Nothing will happen when you run out of hearts&7]"
+			else if {ls.mode} is "Spectator":
+				message "&7[&4You will become a spectator when you run out of hearts&7]"
+			else if {ls.mode} is "Ban":
+				message "&7[&4You will be banned when you run out of hearts&7]"
+			message ""
+			message "&8[&cSecondary&8] &f%{ls.secondary.mode}%"
+			if {ls.secondary.mode} is "Normal":
+				message "&7[&4You will lose hearts when a player kills you&7]"
+			else if {ls.secondary.mode} is "Hard":
+				message "&7[&4You will lose hearts when you die&7]"
+			message "&7&m                                                                      "
+			stop
+		if arg-1 is "recipe":
+			lsrecipemenu(player)
+			stop
+		message "&8[&cLife&4Steal&8] &c/ls &4%arg-1%&f is not a valid argument try &c/ls help&f!"
+
+# variable conversion
+on join:
+	wait 3 ticks
+	if {%player%.hearts} is set:
+		set {%player's uuid%.ls.hearts} to {%player%.hearts}
+		delete {%player%.hearts}
+	if {heartid} is set:
+		set {ls.heartid} to {heartid}
+		delete {heartid}
+
+# lifesteal functionality
+on death of player:
+	if attacker is a player:
+		if attacker is victim:
+			stop
+		if {%victim's uuid%.ls.hearts} is not set:
+			set {%victim's uuid%.ls.hearts} to 10
+		if {%attacker's uuid%.ls.hearts} is not set:
+			set {%attacker's uuid%.ls.hearts} to 10
+		if {%victim's uuid%.ls.hearts} <= 0:
+			message "&8[&cLife&4Steal&8]&4 %victim%&c has no more hearts to steal!" to attacker
+			stop
+		if {%attacker's uuid%.ls.hearts} >= {ls.heartlimit}:
+			message "&8[&cLife&4Steal&8] &fYou are at the maximum amount of hearts!" to attacker
+			message "&7[&cYou have not gained &4%victim%&c's heart&7]" to attacker
+		else:
+			add 1 to {%attacker's uuid%.ls.hearts}
+			if attacker's max health is 0.5:
+				set attacker's max health to 1
+			else:
+				add 1 to attacker's max health
+			message "&8[&cLife&4Steal&8] &fYou have killed &c%victim%&f and gained &c1&f heart!" to attacker
+			message "&8[&cLife&4Steal&8] &fYou were killed by &c%attacker%&f and lost &c1&f heart!" to victim
+			wait 1 tick
+			remove 1 from {%victim's uuid%.ls.hearts}
+			remove 1 from victim's max health
+
+# main menu function
+function lsconfig(p: player):
+	set metadata tag "lsconfig" of {_p} to chest inventory with 3 rows named "&cLife&4Steal &cConfig&7:"
+	set {_ls.count} to 0
+	loop 27 times:
+		set slot {_ls.count} of metadata tag "lsconfig" of {_p} to gray glass pane named "&7"
+		add 1 to {_ls.count}
+	set slot 10 of metadata tag "lsconfig" of {_p} to smithing table named "&cHeart &4Recipe" with lore "&7Click to edit the" and "&7heart crafting recipe"
+	set slot 13 of metadata tag "lsconfig" of {_p} to compass named "&cLife&4Steal &cMode" with lore "&7Click to edit what happens when" and "&7a player runs out of hearts"
+	set slot 16 of metadata tag "lsconfig" of {_p} to black glazed terracotta named "&cOth&4er" with lore "&7Click to view other settings"
+	open (metadata tag "lsconfig" of {_p}) to {_p}
+
+on inventory click:
+	if event-inventory is (metadata tag "lsresmenu" of player):
+		cancel event
+		if event-slot is 11:
+			if click type is left mouse button with shift or right mouse button with shift:
+				wait 1 tick
+				close player's inventory
+				message "&8[&cLife&4Steal&8] &fResetting &call &fplayer data"
+				message "&7[&cThis may cause some lag&7]"
+				loop all offline players:
+					if {%loop-offline player's uuid%.ls.hearts} is set:
+						if loop-offline player is not online:
+							delete {%loop-offline player's uuid%.ls.hearts}
+						else:
+							set {%loop-offline player's uuid%.ls.hearts} to 10
+						set loop-offline player's max health to 10
+					if {%loop-offline player's uuid%.ls.spec} is set:
+						if loop-offline player is online:
+							delete {%loop-offline player's uuid%.ls.spec}
+							set loop-offline player's gamemode to survival
+							message "&8[&cLife&4Steal&8] &fYour hearts were set to &c10&f!" to loop-offline player
+						else:
+							set {%loop-offline player's uuid%.ls.reviveawait} to true
+				message "&8[&cLife&4Steal&8] &fSuccessfully reset all player data!"
+
+		if event-slot is 15:
+			lsother(player)
+	if event-inventory is (metadata tag "lsconfig" of player):
+		cancel event
+		if event-slot is 10:
+			lsrecipe(player)
+		if event-slot is 13:
+			lsmode(player)
+		if event-slot is 16:
+			lsother(player)
+	# recipe menu functionality
+	if event-inventory is (metadata tag "lsrecipe" of player):
+		cancel event
+		if event-slot is 16:
+			lsconfig(player)
+		if event-slot is 3:
+			selrec(player, 1)
+		if event-slot is 4:
+			selrec(player, 2)
+		if event-slot is 5:
+			selrec(player, 3)
+		if event-slot is 12:
+			selrec(player, 4)
+		if event-slot is 13:
+			selrec(player, 5)
+		if event-slot is 14:
+			selrec(player, 6)
+		if event-slot is 21:
+			selrec(player, 7)
+		if event-slot is 22:
+			selrec(player, 8)
+		if event-slot is 23:
+			selrec(player, 9)
+		if event-slot is 10:
+			if {disabled.ls.recipe} is not set:
+				set slot 10 of metadata tag "lsrecipe" of player to light gray wool named "&cToggle &4Heart &cRecipe" with lore "&7Status: &4Disabled" and "&7" and "&7Click to toggle crafting" and "&7hearts &8[&cON&8]"
+				set {disabled.ls.recipe} to true
+				remove custom recipe "heart.recipe"
+			else:
+				set slot 10 of metadata tag "lsrecipe" of player to red wool named "&cToggle &4Heart &cRecipe" with lore "&7Status: &cEnabled" and "&7" and "&7Click to toggle crafting" and "&7hearts &8[&4OFF&8]"
+				delete {disabled.ls.recipe}
+				refrec()
+	# config [other] menu functionality
+	if event-inventory is (metadata tag "lsother" of player):
+		cancel event
+		if event-slot is 10:
+			lsselmax(player)
+		if event-slot is 13:
+			lsresetmenu(player)
+		if event-slot is 26:
+			lsconfig(player)
+		if event-slot is 16:
+			if {redeem.disabled} is set:
+				set slot 16 of metadata tag "lsother" of player to red dye named "&cToggle &4/redeem" with lore "&7Click to toggle the &c/redeem &7command" and "&7Currently set to &8[&cEnabled&8]"
+				delete {redeem.disabled}
+			else:
+				set slot 16 of metadata tag "lsother" of player to gray dye named "&cToggle &4/redeem" with lore "&7Click to toggle the &c/redeem &7command" and "&7Currently set to &8[&4Disabled&8]"
+				set {redeem.disabled} to true
+	# prevent stealing from /ls recipe
+	if event-inventory is (metadata tag "lsrecipemenu" of player):
+		cancel event
+	# mode menu functionality
+	if event-inventory is (metadata tag "lsmode" of player):
+		cancel event
+		if event-slot is 44:
+			lsconfig(player)
+		if event-slot is 10:
+			set {ls.mode} to "Normal"
+			lsmode(player)
+		if event-slot is 13:
+			set {ls.mode} to "Spectator"
+			lsmode(player)
+		if event-slot is 16:
+			if click type is not left mouse button with shift or right mouse button with shift:
+				set {ls.mode} to "Ban"
+				lsmode(player)
+			else:
+				lsselcmd(player)
+		if event-slot is 29:
+			set {ls.secondary.mode} to "Normal"
+			lsmode(player)
+		if event-slot is 33:
+			set {ls.secondary.mode} to "Hard"
+			lsmode(player)
+
+# recipe selection function
+function selrec(p: player, s: number):
+	if {%{_p}'s uuid%.ls.selmax} or {%{_p}'s uuid%.ls.selrec} or {%{_p}'s uuid%.ls.selcmd} is set:
+		message "&8[&cLife&4Steal&8] &fYou are already selecting something!" to {_p}
+		stop
+	set {%{_p}'s uuid%.ls.selrec} to {_s}
+	message "&8[&cLife&4Steal&8] &fEnter a &cvalid item &fin chat!" to {_p}
+	message "&7[&cType &4-hand- &cfor held item and &4-realname- &cto use the items real name in recipe viewing&7]" to {_p}
+	message "&7[&cEditing slot &4%{_s}%&7]" to {_p}
+	close {_p}'s inventory
+
+# recipe selection
+on chat:
+	if {%player's uuid%.ls.selrec} is set:
+		cancel event
+		set {_tmsg} to message
+		replace "-realname-" or " -realname-" or "-realname " or " -realname-" in {_tmsg} with ""
+		if message contains "-hand-":
+			# <!> i know this is inefficient but it is to avoid variable conflict warnings <!>
+			if {%player's uuid%.ls.selrec} is 1:
+				set {1.ls.recipe.item} to player's held item
+				delete {1.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 2:
+				set {2.ls.recipe.item} to player's held item
+				delete {2.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 3:
+				set {3.ls.recipe.item} to player's held item
+				delete {3.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 4:
+				set {4.ls.recipe.item} to player's held item
+				delete {4.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 5:
+				set {5.ls.recipe.item} to player's held item
+				delete {5.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 6:
+				set {6.ls.recipe.item} to player's held item
+				delete {6.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 7:
+				set {7.ls.recipe.item} to player's held item
+				delete {7.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 8:
+				set {8.ls.recipe.item} to player's held item
+				delete {8.ls.recipe.item.realname}
+			if {%player's uuid%.ls.selrec} is 9:
+				set {9.ls.recipe.item} to player's held item
+				delete {9.ls.recipe.item.realname}
+			if message contains "-realname-":
+				if {%player's uuid%.ls.selrec} is 1:
+					set {1.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 2:
+					set {2.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 3:
+					set {3.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 4:
+					set {4.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 5:
+					set {5.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 6:
+					set {6.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 7:
+					set {7.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 8:
+					set {8.ls.recipe.item.realname} to name of player's held item
+				if {%player's uuid%.ls.selrec} is 9:
+					set {9.ls.recipe.item.realname} to name of player's held item
+			message "&8[&cLife&4Steal&8] &fSuccessfully set &cslot &4%{%player's uuid%.ls.selrec}%&f of the heart recipe to &c%player's held item%&f!"
+			delete {%player's uuid%.ls.selrec}
+			refrec()
+			lsrecipe(player)
+		else:
+			if {_tmsg} parsed as item is not an item:
+				message "&8[&cLife&4Steal&8] &fThat is not a valid item!"
+				delete {%player's uuid%.ls.selrec}
+				lsrecipe(player)
+				stop
+			else:
+				# <!> i know this is inefficient but it is to avoid variable conflict warnings <!>
+				if {%player's uuid%.ls.selrec} is 1:
+					set {1.ls.recipe.item} to {_tmsg} parsed as item
+					delete {1.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 2:
+					set {2.ls.recipe.item} to {_tmsg} parsed as item
+					delete {2.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 3:
+					set {3.ls.recipe.item} to {_tmsg} parsed as item
+					delete {3.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 4:
+					set {4.ls.recipe.item} to {_tmsg} parsed as item
+					delete {4.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 5:
+					set {5.ls.recipe.item} to {_tmsg} parsed as item
+					delete {5.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 6:
+					set {6.ls.recipe.item} to {_tmsg} parsed as item
+					delete {6.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 7:
+					set {7.ls.recipe.item} to {_tmsg} parsed as item
+					delete {7.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 8:
+					set {8.ls.recipe.item} to {_tmsg} parsed as item
+					delete {8.ls.recipe.item.realname}
+				if {%player's uuid%.ls.selrec} is 9:
+					set {9.ls.recipe.item} to {_tmsg} parsed as item
+					delete {9.ls.recipe.item.realname}
+				if message contains "-realname-":
+					if {%player's uuid%.ls.selrec} is 1:
+						set {1.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 2:
+						set {2.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 3:
+						set {3.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 4:
+						set {4.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 5:
+						set {5.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 6:
+						set {6.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 7:
+						set {7.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 8:
+						set {8.ls.recipe.item.realname} to {_tmsg} parsed as item
+					if {%player's uuid%.ls.selrec} is 9:
+						set {9.ls.recipe.item.realname} to {_tmsg} parsed as item
+				lsrecipe(player)
+				message "&8[&cLife&4Steal&8] &fSuccessfully set &cslot &4%{%player's uuid%.ls.selrec}%&f of the heart recipe to &c%message%&f!"
+				refrec()
+				delete {%player's uuid%.ls.selrec}
+
+# recipe menu function
+function lsrecipe(p: player):
+	set metadata tag "lsrecipe" of {_p} to chest inventory with 3 rows named "&cLife&4Steal &cConfig &7[&4Recipe&7]:"
+	set {_ls.count} to 0
+	loop 27 times:
+		set slot {_ls.count} of metadata tag "lsrecipe" of {_p} to gray glass pane named "&7"
+		add 1 to {_ls.count}
+	set slot 6 of metadata tag "lsrecipe" of {_p} to black glass pane named "&7"
+	set slot 15 of metadata tag "lsrecipe" of {_p} to black glass pane named "&7"
+	set slot 24 of metadata tag "lsrecipe" of {_p} to black glass pane named "&7"
+	set slot 2 of metadata tag "lsrecipe" of {_p} to black glass pane named "&7"
+	set slot 11 of metadata tag "lsrecipe" of {_p} to black glass pane named "&7"
+	set slot 20 of metadata tag "lsrecipe" of {_p} to black glass pane named "&7"
+	set slot 3 of metadata tag "lsrecipe" of {_p} to {1.ls.recipe.item} named "&c&l%capitalised raw name of {1.ls.recipe.item}%" with lore "&7Click to set slot &c&l1" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 3 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 3 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 4 of metadata tag "lsrecipe" of {_p} to {2.ls.recipe.item} named "&c&l%capitalised raw name of {2.ls.recipe.item}%" with lore "&7Click to set slot &c&l2" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 4 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 4 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 5 of metadata tag "lsrecipe" of {_p} to {3.ls.recipe.item} named "&c&l%capitalised raw name of {3.ls.recipe.item}%" with lore "&7Click to set slot &c&l3" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 5 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 5 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 12 of metadata tag "lsrecipe" of {_p} to {4.ls.recipe.item} named "&c&l%capitalised raw name of {4.ls.recipe.item}%" with lore "&7Click to set slot &c&l4" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 12 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 12 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 13 of metadata tag "lsrecipe" of {_p} to {5.ls.recipe.item} named "&c&l%capitalised raw name of {5.ls.recipe.item}%" with lore "&7Click to set slot &c&l5" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 13 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 13 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 14 of metadata tag "lsrecipe" of {_p} to {6.ls.recipe.item} named "&c&l%capitalised raw name of {6.ls.recipe.item}%" with lore "&7Click to set slot &c&l6" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 14 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 14 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 21 of metadata tag "lsrecipe" of {_p} to {7.ls.recipe.item} named "&c&l%capitalised raw name of {7.ls.recipe.item}%" with lore "&7Click to set slot &c&l7" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 21 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 21 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 22 of metadata tag "lsrecipe" of {_p} to {8.ls.recipe.item} named "&c&l%capitalised raw name of {8.ls.recipe.item}%" with lore "&7Click to set slot &c&l8" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 22 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 22 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 23 of metadata tag "lsrecipe" of {_p} to {9.ls.recipe.item} named "&c&l%capitalised raw name of {9.ls.recipe.item}%" with lore "&7Click to set slot &c&l9" and "&7of the heart recipe"
+	replace "minecraft:" in name of slot 23 of metadata tag "lsrecipe" of {_p} with "&c&l"
+	replace "_" in name of slot 23 of metadata tag "lsrecipe" of {_p} with "&4&l "
+	set slot 16 of metadata tag "lsrecipe" of {_p} to arrow named "&cBack to menu" with lore "&7Return to the" and "&7main menu."
+	if {disabled.ls.recipe} is not set:
+		set slot 10 of metadata tag "lsrecipe" of {_p} to red wool named "&cToggle &4Heart &cRecipe" with lore "&7Status: &cEnabled" and "&7" and "&7Click to toggle crafting" and "&7hearts &8[&4OFF&8]"
+	else:
+		set slot 10 of metadata tag "lsrecipe" of {_p} to light gray wool named "&cToggle &4Heart &cRecipe" with lore "&7Status: &4Disabled" and "&7" and "&7Click to toggle crafting" and "&7hearts &8[&cON&8]"
+	open (metadata tag "lsrecipe" of {_p}) to {_p}
+
+command /heartrecipe:
+	trigger:
+		lsrecipemenu(player)
+
+function lsrecipemenu(p: player):
+	set metadata tag "lsrecipemenu" of {_p} to dispenser inventory named "&4Heart &cCrafting &4Recipe&7:"
+	# <!> i know this is inefficient but it is to avoid variable conflict warnings <!>
+	if {1.ls.recipe.item.realname} is not set:
+		set slot 0 of metadata tag "lsrecipemenu" of {_p} to {1.ls.recipe.item} named "&c&l%capitalised raw name of {1.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 0 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 0 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 0 of metadata tag "lsrecipemenu" of {_p} to {1.ls.recipe.item}
+	if {2.ls.recipe.item.realname} is not set:
+		set slot 1 of metadata tag "lsrecipemenu" of {_p} to {2.ls.recipe.item} named "&c&l%capitalised raw name of {2.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 1 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 1 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 1 of metadata tag "lsrecipemenu" of {_p} to {2.ls.recipe.item}
+	if {3.ls.recipe.item.realname} is not set:
+		set slot 2 of metadata tag "lsrecipemenu" of {_p} to {3.ls.recipe.item} named "&c&l%capitalised raw name of {3.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 2 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 2 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 2 of metadata tag "lsrecipemenu" of {_p} to {3.ls.recipe.item}
+	if {4.ls.recipe.item.realname} is not set:
+		set slot 3 of metadata tag "lsrecipemenu" of {_p} to {4.ls.recipe.item} named "&c&l%capitalised raw name of {4.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 3 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 3 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 3 of metadata tag "lsrecipemenu" of {_p} to {4.ls.recipe.item}
+	if {5.ls.recipe.item.realname} is not set:
+		set slot 4 of metadata tag "lsrecipemenu" of {_p} to {5.ls.recipe.item} named "&c&l%capitalised raw name of {5.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 4 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 4 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 4 of metadata tag "lsrecipemenu" of {_p} to {5.ls.recipe.item}
+	if {6.ls.recipe.item.realname} is not set:
+		set slot 5 of metadata tag "lsrecipemenu" of {_p} to {6.ls.recipe.item} named "&c&l%capitalised raw name of {6.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 5 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 5 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 5 of metadata tag "lsrecipemenu" of {_p} to {6.ls.recipe.item}
+	if {7.ls.recipe.item.realname} is not set:
+		set slot 6 of metadata tag "lsrecipemenu" of {_p} to {7.ls.recipe.item} named "&c&l%capitalised raw name of {7.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 6 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 6 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 6 of metadata tag "lsrecipemenu" of {_p} to {7.ls.recipe.item}
+	if {8.ls.recipe.item.realname} is not set:
+		set slot 7 of metadata tag "lsrecipemenu" of {_p} to {8.ls.recipe.item} named "&c&l%capitalised raw name of {8.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 7 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 7 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 7 of metadata tag "lsrecipemenu" of {_p} to {8.ls.recipe.item}
+	if {9.ls.recipe.item.realname} is not set:
+		set slot 8 of metadata tag "lsrecipemenu" of {_p} to {9.ls.recipe.item} named "&c&l%capitalised raw name of {9.ls.recipe.item}%"
+		replace "minecraft:" in name of slot 8 of metadata tag "lsrecipemenu" of {_p} with "&c&l"
+		replace "_" in name of slot 8 of metadata tag "lsrecipemenu" of {_p} with "&4&l "
+	else:
+		set slot 8 of metadata tag "lsrecipemenu" of {_p} to {9.ls.recipe.item}
+	open (metadata tag "lsrecipemenu" of {_p}) to {_p}
+
+function lsmode(p: player):
+	set metadata tag "lsmode" of {_p} to chest inventory with 5 rows named "&cLife&4Steal &cConfig &7[&4Mode&7]"
+	set {_ls.count} to 0
+	loop 45 times:
+		set slot {_ls.count} of metadata tag "lsmode" of {_p} to gray glass pane named "&7"
+		add 1 to {_ls.count}
+	set slot 44 of metadata tag "lsmode" of {_p} to arrow named "&cBack to menu" with lore "&7Return to the" and "&7main menu."
+	if {ls.mode} is "Normal":
+		set slot 10 of metadata tag "lsmode" of {_p} to red wool named "&cNormal &8[&cPrimary&8]" with lore "&7Status: &cActive" and "&7" and "&7Nothing happens when you run" and "&7out of hearts and die."
+	else:
+		set slot 10 of metadata tag "lsmode" of {_p} to light gray wool named "&cNormal &8[&cPrimary&8]" with lore "&7Status: &4Inactive" and "&7" and "&7Nothing happens when you run" and "&7out of hearts and die." and "&7" and "&cClick to activate this mode!"
+	if {ls.mode} is "Spectator":
+		set slot 13 of metadata tag "lsmode" of {_p} to red wool named "&cSpectator &8[&cPrimary&8]" with lore "&7Status: &cActive" and "&7" and "&7Player will be put into spectator mode" and "&7on death if they run out of hearts" and "&7and can be revived with &c/lsrevive&7."
+	else:
+		set slot 13 of metadata tag "lsmode" of {_p} to light gray wool named "&cSpectator &8[&cPrimary&8]" with lore "&7Status: &4Inactive" and "&7" and "&7Player will be put into spectator mode" and "&7on death if they run out of hearts" and "&7and can be revived with &c/lsrevive&7." and "&7" and "&cClick to activate this mode!"
+	if {ls.mode} is "Ban":
+		set slot 16 of metadata tag "lsmode" of {_p} to red wool named "&cBan &8[&cPrimary&8]" with lore "&7Status: &cActive" and "&7" and "&7Player will be banned on death" and "&7if they run out of hearts." and "&7" and "&cCurrent ban command:" and "&4- &c/&7%{ls.bancmd}% &4-" and "&7[&4Shift click to set&7]"
+	else:
+		set slot 16 of metadata tag "lsmode" of {_p} to light gray wool named "&cBan &8[&cPrimary&8]" with lore "&7Status: &4Inactive" and "&7" and "&7Player will be banned on death" and "&7if they run out of hearts." and "&7" and "&cCurrent ban command:" and "&4- &c/&7%{ls.bancmd}% &4-" and "&7[&4Shift click to set&7]" and "&7" and "&cClick to activate this mode!"
+	if {ls.secondary.mode} is "Normal":
+		set slot 29 of metadata tag "lsmode" of {_p} to red wool named "&cNormal &8[&cSecondary&8]" with lore "&7Status: &cActive" and "&7" and "&7The player will not lose a heart" and "&7on a regular death."
+	else:
+		set slot 29 of metadata tag "lsmode" of {_p} to light gray wool named "&cNormal &8[&cSecondary&8]" with lore "&7Status: &4Inactive" and "&7" and "&7The player will not lose a heart" and "&7on a regular death." and "&7" and "&cClick to activate this mode!"
+	if {ls.secondary.mode} is "Hard":
+		set slot 33 of metadata tag "lsmode" of {_p} to red wool named "&cHard &8[&cSecondary&8]" with lore "&7Status: &cActive" and "&7" and "&7Player will always lose hearts" and "&7on any death"
+	else:
+		set slot 33 of metadata tag "lsmode" of {_p} to light gray wool named "&cHard &8[&cSecondary&8]" with lore "&7Status: &4Inactive" and "&7" and "&7Player will always lose hearts" and "&7on any death" and "&7" and "&cClick to activate this mode!"
+	open (metadata tag "lsmode" of {_p}) to {_p}
+
+command /sethearts [<offline player>] [<text>]:
+	permission: ls.mod
+	permission message: &8[&cLife&4Steal&8] &cYou are lacking the permission node &7[&4ls.mod&7]
+	trigger:
+		if arg-1 or arg-2 is not set:
+			message "&cIncorrect usage! &f/sethearts &7<&cPlayer&7> <&cNumber&7>"
+			stop
+		if arg-2 parsed as number is not a number:
+			message "&cIncorrect usage! &f/sethearts &7<&cPlayer&7> <&cNumber&7>"
+			stop
+		if arg-2 parsed as number is not an integer:
+			message "&cIncorrect usage! &f/sethearts &7<&cPlayer&7> <&cInteger&7>"
+			stop
+		if arg-2 parsed as number < 0:
+			message "&cIncorrect usage! &f/sethearts &7<&cPlayer&7> <&cInteger > 0&7>"
+			stop
+		set {%arg-1's uuid%.ls.hearts} to arg-2 parsed as number
+		set arg-1's max health to arg-2 parsed as number
+		message "&8[&cLife&4Steal&8] &fSet &c%arg-1%&f's hearts to &c%arg-2%&f!"
+		message "&8[&cLife&4Steal&8] &fYour hearts were set to &c%{%arg-1's uuid%.ls.hearts}%&f!" to arg-1
+		if arg-1 is not online:
+			message "&7[&cTheir hearts will be updated on login&7]"
+			set {%arg-1's uuid%.ls.setawait} to arg-2 parsed as integer
+
+# update hearts of offline players from /sethearts
+on join:
+	if {%player's uuid%.ls.hearts} is not set:
+		set {%player's uuid%.ls.hearts} to 10
+	if {%player's uuid%.ls.hearts} is set:
+		wait 1 tick
+		if {%player's uuid%.ls.hearts} is not player's max health:
+			if {%player's uuid%.ls.setawait} is not set:
+				if player's max health is not 0.5:
+					set player's max health to {%player's uuid%.ls.hearts}
+					message "&8[&cLife&4Steal&8] &fYour hearts were desynced and were set to &c%{%player's uuid%.ls.hearts}%&f!"
+				else:
+					if {%player's uuid%.ls.hearts} is not 0:
+						set player's max health to {%player's uuid%.ls.hearts}
+						message "&8[&cLife&4Steal&8] &fYour hearts were desynced and were set to &c%{%player's uuid%.ls.hearts}%&f!"
+				if {%player's uuid%.ls.hearts} is less than 0:
+					set {%player's uuid%.ls.hearts} to 0
+					set player's max health to 0
+					message "&8[&cLife&4Steal&8] &fYour hearts were set to a negative number and were set to &c%{%player's uuid%.ls.hearts}%&f!"
+	if {%player's uuid%.ls.setawait} is set:
+		set {%player's uuid%.ls.hearts} to {%player's uuid%.ls.setawait}
+		set player's max health to {%player's uuid%.ls.setawait}
+		message "&8[&cLife&4Steal&8] &fYour hearts were set to &c%{%player's uuid%.ls.setawait}%&f!"
+		delete {%player's uuid%.ls.setawait}
+	if {%player's uuid%.ls.spec} is set:
+		wait 1 tick
+		set player's gamemode to spectator
+		message "&8[&cLife&4Steal&8] &fYou are currently &celiminated&f."
+	if {%player's uuid%.ls.reviveawait} is set:
+		wait 1 tick
+		delete {%player's uuid%.ls.reviveawait}
+		set player's gamemode to survival
+		message "&8[&cLife&4Steal&8] &fYou have been revived!"
+		set player's max health to 10
+		set {%player's uuid%.ls.hearts} to 10
+
+command /redeem [<string>]:
+	aliases: /withdraw
+	trigger:
+		if {redeem.disabled} is set:
+			message "&8[&cLife&4Steal&8] &cThis command has been disabled in the config!"
+			stop
+		if arg-1 is not set:
+			if player's inventory can hold diamond sword:
+				if {%player's uuid%.ls.hearts} is 0:
+					message "&8[&cLife&4Steal&8] &cYou can not redeem the requested amount of hearts!"
+					stop
+				if {%player's uuid%.ls.hearts} is not set:
+					set {%player's uuid%.ls.hearts} to 10
+				set {%player's uuid%.ls.hearts} to {%player's uuid%.ls.hearts} - 1
+				set player's max health to player's max health - 1
+				add 1 to {ls.heartid}
+				give red dye of infinity 1 named "&cHea&4rt" with enchant flags hidden with lore "&7Right click to add to" and "&7your &cmax-health" and "&8ID: %{ls.heartid}%" to player
+				message "&8[&cLife&4Steal&8] &fYou redeemed a &cHea&4rt&f!"
+			else:
+				message "&8[&cLife&4Steal&8] &fYour inventory is full!"
+			stop
+		if arg-1 parsed as number <= 0:
+			message "&cIncorrect usage! &f/redeem &7[&cInteger > 0&f&7]"
+			stop
+		if arg-1 parsed as number is not a number:
+			message "&cIncorrect usage! &f/redeem &7[&cNumber&f&7]"
+			stop
+		if arg-1 parsed as number is not an integer:
+			message "&cIncorrect usage! &f/redeem &7[&cInteger&f&7]"
+			stop
+		if {%player's uuid%.ls.hearts} is 0:
+			message "&8[&cLife&4Steal&8] &cYou can not redeem the requested amount of hearts!"
+			stop
+		if arg-1 parsed as number > {%player's uuid%.ls.hearts}:
+			message "&8[&cLife&4Steal&8] &cYou can not redeem the requested amount of hearts!"
+			stop
+		if player's inventory can hold "%arg-1% diamond sword" parsed as item:
+			if {%player's uuid%.ls.hearts} is not set:
+				set {%player's uuid%.ls.hearts} to 10
+			loop arg-1 parsed as number times:
+				add 1 to {ls.heartid}
+				give red dye of infinity 1 named "&cHea&4rt" with enchant flags hidden with lore "&7Right click to add to" and "&7your &cmax-health" and "&8ID: %{ls.heartid}%" to player
+				set {%player's uuid%.ls.hearts} to {%player's uuid%.ls.hearts} - 1
+				set player's max health to player's max health - 1
+			message "&8[&cLife&4Steal&8] &fYou redeemed &c%arg-1% Hea&4rts&f!"
+		else:
+			message "&8[&cLife&4Steal&8] &fThe requested amount of &cHea&4rts &fcan not fit in your inventory!"
+
+command /checkhearts [<offline player>]:
+	permission: ls.mod
+	permission message: &8[&cLife&4Steal&8] &cYou are lacking the permission node &7[&4ls.mod&7]
+	trigger:
+		if arg-1 is not set:
+			message "&cIncorrect usage! &f/checkhearts &7<&cPlayer&7>"
+			stop
+		set {_ls.temp} to {%arg-1's uuid%.ls.hearts} * 2
+		if {%arg-1's uuid%.ls.hearts} is 0:
+			set {_ls.temp} to 1
+		message "&8[&cLife&4Steal&8]&c %arg-1%&f has &c%{%arg-1's uuid%.ls.hearts}% &4Hearts&f or &c%{_ls.temp}% &4HP&f."
+
+command /givehearts [<text>]:
+	permission: ls.admin
+	permission message: &8[&cLife&4Steal&8] &cYou are lacking the permission node &7[&4ls.admin&7]
+	trigger:
+		if arg-1 parsed as number is not an integer:
+			message "&cIncorrect usage! &f/givehearts &7<&cNumber&7>"
+			stop
+		if arg-1 parsed as number <= 0:
+			message "&cIncorrect usage! &f/givehearts &7<&cInteger > 0&7>"
+			stop
+		if player's inventory can hold "%arg-1% diamond sword" parsed as item:
+			loop arg-1 parsed as number times:
+				add 1 to {ls.heartid}
+				give red dye of infinity 1 named "&cHea&4rt" with enchant flags hidden with lore "&7Right click to add to" and "&7your &cmax-health" and "&8ID: %{ls.heartid}%" to player
+			if arg-1 parsed as number is 1:
+				message "&8[&cLife&4Steal&8] &fYou gave yourself a physical &cHea&4rt&f!"
+			else:
+				message "&8[&cLife&4Steal&8] &fYou gave yourself &c%arg-1%&f physical &cHea&4rts&f!"
+		else:
+			message "&8[&cLife&4Steal&8] &fThe requested amount of &cHea&4rts &fcan not fit in your inventory!"
+
+# select heart limit function
+function lsselmax(p: player):
+	if {%{_p}'s uuid%.ls.selmax} or {%{_p}'s uuid%.ls.selrec} or {%{_p}'s uuid%.ls.selcmd} is set:
+		message "&8[&cLife&4Steal&8]&f You are already selecting something!" to {_p}
+		stop
+	message "&8[&cLife&4Steal&8] &fEnter a valid &cInteger&f:" to {_p}
+	set {%{_p}'s uuid%.ls.selmax} to true
+	close {_p}'s inventory
+
+# select heart limit functionality
+on chat:
+	if {%player's uuid%.ls.selmax} is set:
+		cancel event
+		if message parsed as number is not an integer:
+			message "&8[&cLife&4Steal&8] &fYou need to enter a valid integer!"
+			lsother(player)
+			delete {%player's uuid%.ls.selmax}
+			stop
+		if message parsed as number <= 0:
+			message "&8[&cLife&4Steal&8]  &fYou need to enter a value more than 0!"
+			lsother(player)
+			delete {%player's uuid%.ls.selmax}
+			stop
+		set {ls.heartlimit} to message parsed as number
+		message "&8[&cLife&4Steal&8] &fSet the heart limit to &c%message%&f!"
+		lsother(player)
+		delete {%player's uuid%.ls.selmax}
+
+# ban command function
+function lsselcmd(p: player):
+	if {%{_p}'s uuid%.ls.selmax} or {%{_p}'s uuid%.ls.selrec} or {%{_p}'s uuid%.ls.selcmd} is set:
+		message "&8[&cLife&4Steal&8] &fYou are already selecting something!" to {_p}
+		stop
+	set {%{_p}'s uuid%.ls.selcmd} to true
+	message "&8[&cLife&4Steal&8]&f Enter the command in chat using &c{user} &ffor the player name:" to {_p}
+	message "&7[&cYou do not need to include the &4/&7]" to {_p}
+	close {_p}'s inventory
+
+# select ban command
+on chat:
+	if {%player's uuid%.ls.selcmd} is set:
+		delete {%player's uuid%.ls.selcmd}
+		cancel event
+		if message does not contain "{user}":
+			message "&8[&cLife&4Steal&8] &fYou need to include &c{user}&f in the command!"
+			lsmode(player)
+			stop
+		set {ls.bancmd} to message
+		message "&8[&cLife&4Steal&8] &fSet the ban command to:"
+		message "&4- &c%message% &4-"
+		lsmode(player)
+
+# lifesteal mode functionality
+on death of player:
+	if {ls.mode} is "Ban":
+		if {ls.secondary.mode} is "Hard":
+			if victim's max health is 0.5:
+				set {_ls.temp.2} to {ls.bancmd}
+				replace "{user}" in {_ls.temp.2} with "%victim%"
+				strike lightning effect at location of victim
+				broadcast "&8[&cLife&4Steal&8] &c%victim% &fhas been eliminated!"
+				execute console command "/%{_ls.temp.2}%"
+		else if {ls.secondary.mode} is "Normal":
+			if victim's max health is 0.5:
+				if attacker is a player:
+					if attacker is not victim:
+						set {_ls.temp.2} to {ls.bancmd}
+						replace "{user}" in {_ls.temp.2} with "%victim%"
+						strike lightning effect at location of victim
+						broadcast "&8[&cLife&4Steal&8] &c%victim% &fhas been eliminated!"
+						execute console command "/%{_ls.temp.2}%"
+	if {ls.mode} is "Spectator":
+		if {ls.secondary.mode} is "Hard":
+			if victim's max health is 0.5:
+				if {%victim's uuid%.ls.spec} is not set:
+					set {%victim's uuid%.ls.spec} to true
+					broadcast "&8[&cLife&4Steal&8] &c%victim% &fhas been eliminated!"
+					strike lightning effect at location of victim
+					set victim's gamemode to spectator
+		else if {ls.secondary.mode} is "Normal":
+			if victim's max health is 0.5:
+				if attacker is a player:
+					if attacker is not victim:
+						set {%victim's uuid%.ls.spec} to true
+						broadcast "&8[&cLife&4Steal&8] &c%victim% &fhas been eliminated!"
+						strike lightning effect at location of victim
+						set victim's gamemode to spectator
+on death of player:
+	if {ls.secondary.mode} is "Hard":
+		if victim is not attacker:
+			if attacker is a player:
+				stop
+		if {%victim's uuid%.ls.hearts} is not set:
+			set {%victim's uuid%.ls.hearts} to true
+		if {%victim's uuid%.ls.hearts} is not 0:
+			wait 1 tick
+			set {%victim's uuid%.ls.hearts} to {%victim's uuid%.ls.hearts} - 1
+			set victim's max health to victim's max health - 1
+			message "&8[&cLife&4Steal&8] &fYou died and lost a &cHea&4rt&f!" to victim
+
+command /lsrevive [<offline player>]:
+	permission: ls.mod
+	permission message: &8[&cLife&4Steal&8] &cYou are lacking the permission node &7[&4ls.mod&7]
+	trigger:
+		if arg-1 is not set:
+			message "&cIncorrect usage! &f/lsrevive &7<&cPlayer&7>"
+			stop
+		if {%arg-1's uuid%.ls.spec} is not set:
+			message "&8[&cLife&4Steal&8] &c%arg-1% &fis not eliminated."
+			stop
+		delete {%arg-1's uuid%.ls.spec}
+		set arg-1's gamemode to survival
+		message "&8[&cLife&4Steal&8] &fYou have been revived!" to arg-1
+		message "&8[&cLife&4Steal&8] &fYou successfully revived &c%arg-1%&f!"
+		set {%arg-1's uuid%.ls.hearts} to 10
+		set arg-1's max health to 10
+		if arg-1 is not online:
+			set {%arg-1's uuid%.ls.reviveawait} to true
+			message "&7[&cThey will be revived on login&7]"
+
+# reset playerdata menu
+function lsresetmenu(p: player):
+	set metadata tag "lsresmenu" of {_p} to chest inventory with 3 rows named "&cLife&4Steal &cConfig &7[&4Reset&7]"
+	set {_ls.count} to 0
+	loop 27 times:
+		set slot {_ls.count} of metadata tag "lsresmenu" of {_p} to gray glass pane named "&7"
+		add 1 to {_ls.count}
+	set slot 11 of metadata tag "lsresmenu" of {_p} to red glazed terracotta named "&cConfirm" with lore "&7Shift-click to confirm this action"
+	set slot 15 of metadata tag "lsresmenu" of {_p} to black glazed terracotta named "&4Cancel" with lore "&7Click to cancel this action"
+	open (metadata tag "lsresmenu" of {_p}) to {_p}
+
+# config [other] menu
+function lsother(p: player):
+	set metadata tag "lsother" of {_p} to chest inventory with 3 rows named "&cLife&4Steal &cConfig &7[&4Other&7]"
+	set {_count} to 0
+	loop 27 times:
+		set slot {_count} of metadata tag "lsother" of {_p} to gray glass pane named "&7"
+		add 1 to {_count}
+	set slot 10 of metadata tag "lsother" of {_p} to note block named "&cHeart &4Limit" with lore "&7Status: &c%{ls.heartlimit}%" and "&7" and "&7Click to edit the maximum amount" and "&7of hearts a player can have"
+	set slot 13 of metadata tag "lsother" of {_p} to red glass named "&cReset &4Player data" with lore "&7This will reset all player's hearts" and "&7and spectator status"
+	set slot 26 of metadata tag "lsother" of {_p} to arrow named "&cBack to menu" with lore "&7Return to the" and "&7main menu."
+	if {redeem.disabled} is not set:
+		set slot 16 of metadata tag "lsother" of {_p} to red dye named "&cToggle &4/redeem" with lore "&7Click to toggle the &c/redeem &7command" and "&7Currently set to &8[&cEnabled&8]"
+	else:
+		set slot 16 of metadata tag "lsother" of {_p} to gray dye named "&cToggle &4/redeem" with lore "&7Click to toggle the &c/redeem &7command" and "&7Currently set to &8[&4Disabled&8]"
+	open (metadata tag "lsother" of {_p}) to {_p}
